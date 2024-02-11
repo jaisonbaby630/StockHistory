@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/css/styles.css">
+    <title>StockHistory</title>
+</head>
+<body>
+  <div class="tottxt">
+   <div class="headtxt"> Stock History</div>
+   <div class="subtxt"> Stock history data possesses the power to unveil patterns and trends,<br> guiding investors in making informed decisions based on historical performance.</div>
+ </div>
+    <div class="container">
+        <form action="/download" method="post" id="myForm">
+            <h1>StockHistory</h1>
+
+            <div class="form-group">
+                <label for="stock">Stock</label>
+                <select id="stock" name="stock">
+                    <option value="RPOWER.NS">RPOWER</option>
+                     {% for i in nifty50_data: %}
+                    <option value='{{ i+".NS" }}'>{{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fromDate">From</label>
+                <input type="date" id="fromDate" name="fromDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="toDate">To</label>
+                <input type="date" id="toDate" name="toDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="timeFrame">Time Frame</label>
+                <select id="timeFrame" name="timeFrame">
+                    <option value="1m">1 Minutes</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m">15 Minutes</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submitButton">Download</button>
+            <div class="loader" id="loader"></div>
+        </form>
+    </div>
+</body>
+<script>
+document.getElementById("myForm").addEventListener("submit", function(event) {
+    // Prevent form submission
+    event.preventDefault();
+
+    var loader = document.getElementById("loader");
+    loader.style.display = "block"; // Show the loader
+
+    var fromDate = new Date(document.getElementById("fromDate").value);
+    var toDate = new Date(document.getElementById("toDate").value);
+    var today = new Date();
+
+    if (fromDate > today || toDate > today) {
+        alert("Selected dates cannot be future dates.");
+        loader.style.display = "none"; // Hide the loader
+        return;
+    }
+
+    if (fromDate > toDate) {
+        alert("From date cannot be after To date.");
+        loader.style.display = "none"; // Hide the loader
+        return;
+    }
+
+    var form = document.getElementById("myForm");
+    var formData = new FormData(form);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open(form.method, form.action, true);
+    xhr.responseType = 'blob'; // Set response type to blob to handle file download
+
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            // Create a blob URL for the file
+            var blob = new Blob([xhr.response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            var url = window.URL.createObjectURL(blob);
+
+            // Create a temporary link element to trigger the download
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'stock_data.xlsx';
+            document.body.appendChild(a);
+            a.click();
+
+            // Hide the loader
+            loader.style.display = "none";
+        }
+    };
+
+    xhr.send(formData);
+});
+</script>
+</html>
